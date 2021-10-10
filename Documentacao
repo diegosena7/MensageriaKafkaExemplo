@@ -1,15 +1,67 @@
-Na classe NewOrder.java trabalhamos com os protudores de mensagens, onde usamos
-a classe KafkaProducer para criar nosso producer que irá produzir as msgs.
-Usamos a classe ProducerRecord para guardar as msgs no Kafka que recebe o nome do
-tópico criado, além de receber a chave e o valor como parâmetros a serem salvos.
-Usamos o método send para enviar uma msg ao Kafka, através dele passamos o callback
-com os dados de sucesso (data) ou a exception de falha (ex).
+Os três principais componentes do Kafka são:
+1 - Producer (Produtor)
+2 - Broker (Intermediador)
+3 - Consumer (Consumidor)
+
+Em primeiro lugar, o Producer envia mensagens para o Cluster (Kafka) , que é um intermediador em execução em um grupo
+de computadores. Em seguida, os Clusters (Kafka) armazenam esses dados no registro de mensagens do Kafka.
+O Consumer lê e processa as mensagens do Cluster (Kafka).
+
+Os conceitos básicos do Apache Kafka:
+
+1. Producer -> É a parte da aplicação responsável por enviar mensagens
+2. Broker -> Atua como um intermediador de mensagens entre o Producer e o Consumer. Como o Producer e o Consumer não
+interagem diretamente, usam o Broker para intermediar essa troca de mensagens.
+3. Consumer -> É a parte da aplicação responsável por receber/consumir dados/mensagens produzidas pelo consumer e
+disponibilizadas no Broker.
+4. Cluster -> Grupo de "computadores" executando uma instância do Broker.
+5. Tópico -> São grupos de mensagens dentro do Kafka. Todas as mensagens enviadas para o Kafka permanecem em um tópico.
+É usado para manter a ordenação de um sistema em Kafka, pode possuir N partições e ao receber uma nova msg o Kafka
+direciona a msg para uma partição específica usando sua chave (key), deixando suas respectivas msgs atreladas a suas
+respectivas chaves (key) e garante a ordenação das msgs em seus tópicos.
+6. Partição -> Usado como divisor dos dados/msgs de um tópico.
+7. Descolcamento ->  É um número de sequência de uma mensagem em uma partição, atribuído conforme chegam e se tornam
+imutáveis. O kafka armazena as msgs na ordem de chegada em uma partição, para localizar diretamente  uma msg devemos
+passar 3 parâmetros que são: o nome do tópico, o número da partição e o do deslocamento.
+8. Grupo de Consumers -> Usado para compartilhar o trabalho de consumir grande quantidade de mensagens e organizar
+de Broker/Producer será feita a leitura das informações/dados.
+
+Na classe NewOrder.java trabalhamos com os protudores de mensagens, onde usamos a classe KafkaProducer para criar nosso
+producer que irá produzir as msgs. Criamos um ID randomico (UUID.randomUUID()), onde esse valor foi direcionado como
+chave (key) para servir como parâmetro para a nossa partição destinar as msgs ao destinatário (Consumers).
+Usamos a classe ProducerRecord para guardar as msgs no Kafka que recebe o nome dotópico criado, além de receber a chave
+e o valor como parâmetros a serem salvos.
+Usamos o método send para enviar uma msg ao Kafka, através dele passamos o callbackcom os dados de sucesso (data) ou a
+exception de falha (ex).
+Criamos um atributo emailRecord do tipo ProducerRecord que envia msgs de email, passamoscomo parâmetro o tópico
+responsável pelas msgs, uma chave e um valor, usamos o método send e para enviar uma msg ao Kafka, através dele
+passamos o callback com os dados de sucesso (data) ou a exception de falha (ex).
 
 OBS: Não é boa prática ter um consumer escutando/consumindo mais de 1 tópico
+OBS: Internamente no Kafka, consumidores são organizados em grupos (consumer groups), com issso, nas classes de consumer
+temos que indicar os grupos ao setarmos as propriedades (setProperty) usando o GROUP_ID_CONFIG na chamada do método
+ConsumerConfig.
+OBS: O Kafka faz o balanceamento das msgs entre os grupos que consomem de um mesmo Consumer, podemos definir o
+direcionamento das msgs aos Consumers através das chaves (key).
+A chave (key) é usada para distribuir a mensagem entre as partições existentes e consequentemente entre as instâncias
+de um serviço dentro de um consumer group.
 
-Na classe FraudDetectorService criamos nosso consumidor de msgs, usamos a classe KafkaConsumer
-criamos uma lista baseada em nosso tópico (ECOMMERCE_NEW_ORDER), criamos uma variável records
-que faz a verificação no consumer a cada 10 segundos e enquanto houver valores no records
-imprimimos esses valores na tela.
+OBS: O número de partições em um tópico, deve ser igual ou maior que o número de Consumer Groups.
+
+Na classe FraudDetectorService criamos nosso consumidor de msgs, usamos a classe KafkaConsumer criamos uma lista baseada
+em nosso tópico (ECOMMERCE_NEW_ORDER), criamos uma variável records que faz a verificação no consumer a cada 5 segundos
+e enquanto houver valores no records imprimimos esses valores na tela. Setamos as propriedades usando o método setProperty
+deserializamos os valores e setamos o id do grupo da nossa classe FraudDetectorService.
+Criamos um nome para o ID do grupo usando o setProperty através do CLIENT_ID_CONFIG, usamos o MAX_POLL_RECORDS_CONFIG e
+comsumimos os recusros de 1 em 1, para podermos baçancear os commits dessas msgs e não sobrecarregar o consumer.
+
+Na classe EmailService criamos um consumidor de msgs de envio de emails via Kafka. Usamos a classe KafkaConsumer criamos
+uma lista baseada em nosso tópico (ECOMMERCE_SEND_EMAIL), criamos uma variável records que faz a verificação no consumer
+a cada 5 segundos e enquanto houver valores no records imprimimos esses valores na tela. Setamos as propriedades usando
+o método setProperty deserializamos os valores e setamos o id do grupo da nossa classe EmailService.
+
+Na classe LogService criamos um consumer e usamos no métoso subscribe passando a classe Pattern (como expressão regular)
+que ele irá "escutar" todos os tópicos do tipo ECOMMERCE, ou seja, ele irá consumir msgs de mais de um producer.
+
 
 
