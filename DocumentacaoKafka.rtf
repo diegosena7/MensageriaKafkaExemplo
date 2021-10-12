@@ -26,23 +26,20 @@ passar 3 parâmetros que são: o nome do tópico, o número da partição e o do deslo
 8. Grupo de Consumers -> Usado para compartilhar o trabalho de consumir grande quantidade de mensagens e organizar
 de Broker/Producer será feita a leitura das informações/dados.
 
-Na classe NewOrder.java trabalhamos com os protudores de mensagens, onde usamos a classe KafkaProducer para criar nosso
-producer que irá produzir as msgs.
-Usamos a classe ProducerRecord para guardar as msgs no Kafka que recebe o nome dotópico criado, além de receber a chave
-e o valor como parâmetros a serem salvos.
-Usamos o método send para enviar uma msg ao Kafka, através dele passamos o callbackcom os dados de sucesso (data) ou a
-exception de falha (ex).
-Criamos um atributo emailRecord do tipo ProducerRecord que envia msgs de email, passamoscomo parâmetro o tópico
-responsável pelas msgs, uma chave e um valor, usamos o método send e para enviar uma msg ao Kafka, através dele
-passamos o callback com os dados de sucesso (data) ou a exception de falha (ex).
+Na classe NewOrderMain.java classe responsável por iniciar a chamada di serviço de mensageria (KafkaDispacher)
+
+Na classe KafkaDispacher responsável por criar os produtores de msgs, usamos a classe KafkaProducer para criar nosso
+producer que irá produzir as msgs, setamos as propriedades através do método properties, usamos o GsonSerializer para
+serializar o objeto em Json e usamos o método send para enviar as msgs passando como parâmetro topic, key e value.
+
+Na classe KafkaService responsável por realizar o envio das msgs aos serviços/classes de consumers
+
+Criamos as classes GsonSerializer e GsonDeserializer para trabalhar a serialização e deserialização dos objetos
+
+Criamos um módulo para cada microservice desenvolvido.
 
 OBS: Não é boa prática ter um consumer escutando/consumindo mais de 1 tópico
 OBS: Internamente no Kafka, consumidores são organizados em grupos, com issso, nas classes de consumer temos que
 indicar os grupos ao setarmos as propriedades (setProperty) usando o GROUP_ID_CONFIG na chamada do método ConsumerConfig.
 
-Na classe FraudDetectorService criamos nosso consumidor de msgs, usamos a classe KafkaConsumer criamos uma lista baseada
-em nosso tópico (ECOMMERCE_NEW_ORDER), criamos uma variável records que faz a verificação no consumer a cada 10
-segundos e enquanto houver valores no records imprimimos esses valores na tela.
-
-Na classe EmailService criamos um consumidor de msgs de envio de emails via Kafka
 
