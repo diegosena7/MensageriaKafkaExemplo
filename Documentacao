@@ -26,17 +26,6 @@ passar 3 parâmetros que são: o nome do tópico, o número da partição e o do
 8. Grupo de Consumers -> Usado para compartilhar o trabalho de consumir grande quantidade de mensagens e organizar
 de Broker/Producer será feita a leitura das informações/dados.
 
-Na classe NewOrder.java trabalhamos com os protudores de mensagens, onde usamos a classe KafkaProducer para criar nosso
-producer que irá produzir as msgs. Criamos um ID randomico (UUID.randomUUID()), onde esse valor foi direcionado como
-chave (key) para servir como parâmetro para a nossa partição destinar as msgs ao destinatário (Consumers).
-Usamos a classe ProducerRecord para guardar as msgs no Kafka que recebe o nome dotópico criado, além de receber a chave
-e o valor como parâmetros a serem salvos.
-Usamos o método send para enviar uma msg ao Kafka, através dele passamos o callbackcom os dados de sucesso (data) ou a
-exception de falha (ex).
-Criamos um atributo emailRecord do tipo ProducerRecord que envia msgs de email, passamoscomo parâmetro o tópico
-responsável pelas msgs, uma chave e um valor, usamos o método send e para enviar uma msg ao Kafka, através dele
-passamos o callback com os dados de sucesso (data) ou a exception de falha (ex).
-
 OBS: Não é boa prática ter um consumer escutando/consumindo mais de 1 tópico
 OBS: Internamente no Kafka, consumidores são organizados em grupos (consumer groups), com issso, nas classes de consumer
 temos que indicar os grupos ao setarmos as propriedades (setProperty) usando o GROUP_ID_CONFIG na chamada do método
@@ -45,23 +34,35 @@ OBS: O Kafka faz o balanceamento das msgs entre os grupos que consomem de um mes
 direcionamento das msgs aos Consumers através das chaves (key).
 A chave (key) é usada para distribuir a mensagem entre as partições existentes e consequentemente entre as instâncias
 de um serviço dentro de um consumer group.
-
 OBS: O número de partições em um tópico, deve ser igual ou maior que o número de Consumer Groups.
 
-Na classe FraudDetectorService criamos nosso consumidor de msgs, usamos a classe KafkaConsumer criamos uma lista baseada
-em nosso tópico (ECOMMERCE_NEW_ORDER), criamos uma variável records que faz a verificação no consumer a cada 5 segundos
-e enquanto houver valores no records imprimimos esses valores na tela. Setamos as propriedades usando o método setProperty
-deserializamos os valores e setamos o id do grupo da nossa classe FraudDetectorService.
-Criamos um nome para o ID do grupo usando o setProperty através do CLIENT_ID_CONFIG, usamos o MAX_POLL_RECORDS_CONFIG e
-comsumimos os recusros de 1 em 1, para podermos baçancear os commits dessas msgs e não sobrecarregar o consumer.
+Na classe NewOrderMain estamos usando como responsável por chamar o dispacher e passar os parâmetros (tópico, key,
+value).
 
-Na classe EmailService criamos um consumidor de msgs de envio de emails via Kafka. Usamos a classe KafkaConsumer criamos
-uma lista baseada em nosso tópico (ECOMMERCE_SEND_EMAIL), criamos uma variável records que faz a verificação no consumer
-a cada 5 segundos e enquanto houver valores no records imprimimos esses valores na tela. Setamos as propriedades usando
-o método setProperty deserializamos os valores e setamos o id do grupo da nossa classe EmailService.
+A classe KafkaDispatcher é responsável por produzir as msgs, usa o método properties para passar as propriedades e
+conectar com o servidor, usa o método send para enviar as msgs para o tópico com a chave (key) e o valor (value).
 
-Na classe LogService criamos um consumer e usamos no métoso subscribe passando a classe Pattern (como expressão regular)
+A classe KafkaService é responsável por instanciar os consumidores de msgs, cria o consumer através da classe
+KafkaConsumer criamos um método run para executar o consumer e registrar os dados recebidos. Setamos as propriedades
+usando o método properties, onde passamos o servidor, chave, valor e o id do grupo de consumo.
+
+Na classe FraudDetectorService usamos um try onde instanciamos a classe KafkaService e passamos os parâmetros (groupId,
+topic, parse), através do atributo service do tipo KafkaService chamamos o método run. O método parse imprime os
+atributos do objeto record.
+
+Na classe EmailService usamos um try onde instanciamos a classe KafkaService e passamos os parâmetros (groupId, topic,
+parse), através do atributo service do tipo KafkaService chamamos o método run. O método parse imprime os atributos do
+objeto record.
+
+Na classe LogService criamos um consumer e usamos no método subscribe passando a classe Pattern (como expressão regular)
 que ele irá "escutar" todos os tópicos do tipo ECOMMERCE, ou seja, ele irá consumir msgs de mais de um producer.
+Enquanto tiver registros no atributo records ele imprime as msgs do conteúdo e setamos as propriedades através do método
+properties.
+
+Na classe ConsumerFunction criamos como interface e possui um método consume que recebe um ConsumerRecord do tipo String
+
+Na classe KafkaService, criamos um consumer do tipo KafkaConsumer, intanciamos a classe ConsumerFunction. Criamos um
+método run, onde esse método faz busca na lista de consumers para cada record encontrado na lista.
 
 
 
